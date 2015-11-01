@@ -1,16 +1,3 @@
 machine:
   services:
     - docker
-#deployment:
-#  production:
-#    branch: master
-#    owner: arpheno
-#    commands:
-#  staging:
-#    branch: staging
-#    commands:
-#      - ./deploy_staging.sh
-#  development:
-#    branch: development
-#    commands:
-

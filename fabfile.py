@@ -14,9 +14,14 @@ def test():
 def celery():
     ps = local('ps aux', capture=True)
     assert '/var/www/bf/env/bin/celery' not in ps, "Please stop the deployment celery worker before you run tests"
+    # idk man, fuck it
     local('cd backendfail && celery -A settings worker --loglevel=INFO &')  # this is probably really bad
     yield
     local('killall celery')  # this is probably really bad
+
+
+def kill_celery():
+    local('killall celery')
 
 
 @contextmanager
@@ -64,9 +69,10 @@ def test():
     return local(r'py.test -n 4 tests')
 
 
-def localcoverage():
-    with  rabbitmq(), selenium():
-        coverage()
+def totalcoverage():
+    with celery(), runserver(), selenium():
+        local(
+            r'coverage run --omit="backendfail/ror/**,backendfail/tests/**,backendfail/settings/**,**/skeleton/**" --source backendfail -m py.test -x -v backendfail/tests')
 
 
 def coverage():
@@ -84,7 +90,6 @@ def graphite():
 def selenium():
     try:
         local(r"docker start selenium")
-        time.sleep(3)
         yield
         local(r"docker stop selenium")
     except:
@@ -95,17 +100,8 @@ def selenium():
             yield
 
 
-@contextmanager
 def rabbitmq():
-    try:
-        local(r"docker start rabbitmq")
-        yield
-        local(r"docker stop rabbitmq")
-    except:
-        local("docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq", capture=True)
-        time.sleep(10)
-        with rabbitmq():
-            yield
+    local("docker run -d -p 5672:5672 -p 15672:15672 rabbitmq")
 
 
 def postgresql():
